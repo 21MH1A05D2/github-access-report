@@ -1,6 +1,5 @@
-GitHub Access Report
-
 How to Run the Project
+
 Clone the repository:
 git clone https://github.com/21MH1A05D2/github-access-report.git
 cd github-access-report
@@ -11,39 +10,76 @@ setx GITHUB_TOKEN "your_personal_access_token"
 Linux/macOS:
 export GITHUB_TOKEN="your_personal_access_token"
 
-Configure your organization name in src/main/resources/application.properties:
+Configure your application properties in src/main/resources/application.properties:
 github.token=${GITHUB_TOKEN}
-
 
 Run the application:
 mvn spring-boot:run
-The app will start at http://localhost:8080.
+The app will start at: http://localhost:8080
 
-How Authentication is Configured
+Authentication
 Uses a GitHub Personal Access Token (PAT).
 Token is read from the environment variable GITHUB_TOKEN.
-Required scopes: repo and read:org.
-How to Call the API Endpoint
+Required scopes:
+repo → to access repository collaborators
+read:org → to read organization information
 
-Endpoint:
+API Endpoint:
 GET http://localhost:8080/api/access-report?org=org-name
 
-Sample Response:
+Sample Response
+The API now returns the full GitHub permissions object for each repository:
 
 {
+  "organization": "org-name",
+  "generated_at": "Sun Mar 22 21:30:00 IST 2026",
   "users": {
     "21MH1A05D2": [
-      {"repoName": "21MH1A05D2", "permission": "owner"},
-      {"repoName": "catalog", "permission": "owner"},
-      {"repoName": "github-access-report", "permission": "owner"},
-      {"repoName": "Recipehub", "permission": "owner"},
-      {"repoName": "travelbookingmanagement", "permission": "owner"},
-      {"repoName": "whatsappchatanalyzer", "permission": "owner"}
+      {
+        "repoName": "21MH1A05D2",
+        "permissions": {
+          "admin": true,
+          "push": true,
+          "pull": true
+        }
+      },
+      {
+        "repoName": "catalog",
+        "permissions": {
+          "admin": true,
+          "push": true,
+          "pull": true
+        }
+      },
+      {
+        "repoName": "github-access-report",
+        "permissions": {
+          "admin": true,
+          "push": true,
+          "pull": true
+        }
+      }
+    ],
+    "alice": [
+      {
+        "repoName": "catalog",
+        "permissions": {
+          "admin": false,
+          "push": true,
+          "pull": true
+        }
+      }
     ]
+  },
+  "metadata": {
+    "total_users": 2,
+    "total_repositories": 3
   }
 }
-
-Assumptions or Design Decisions
+Assumptions & Design Decisions
 Only repositories and users within the specified organization are included.
-Permissions are reported as provided by GitHub (owner, write, read).
+Permissions are reported exactly as provided by GitHub (admin, push, pull).
+Repository owners are included with full permissions (admin=true, push=true, pull=true).
 GitHub PAT is accessed securely via environment variables, not stored in code.
+The service fetches all collaborators including users with direct and indirect access (via teams can be added in future).
+Pagination is handled with per_page=100 for scalability (supports organizations with 100+ repositories and 1000+ users).
